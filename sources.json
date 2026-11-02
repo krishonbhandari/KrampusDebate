@@ -1,0 +1,45 @@
+{
+  "checkedOn": "2026-11-02",
+  "purpose": "Research starting points for editable student contributions; no invented quotations or quantitative claims.",
+  "sources": [
+    {
+      "id": "austria-tourism",
+      "title": "A Raucous Christmas: Winter Traditions in Austria",
+      "publisher": "Austrian National Tourist Office",
+      "url": "https://www.austria.info/en-us/inspiration/raucous-traditions/",
+      "supports": "Living Austrian winter customs; masks, fur and bells; the association with St. Nicholas; regional cultural identity.",
+      "limits": "Tourism interpretation, not a scholarly chronology. The page describes Krampus origins as uncertain. Do not turn speculative ancient origins into established dates.",
+      "sceneIds": ["roots", "authentic", "community"]
+    },
+    {
+      "id": "smithsonian",
+      "title": "The Origin of Krampus, Europe's Evil Twist on Santa",
+      "author": "Jennifer Billock",
+      "publisher": "Smithsonian Magazine",
+      "publishedOn": "2015-12-04",
+      "url": "https://www.smithsonianmag.com/travel/krampus-could-come-you-holiday-season-180957438/",
+      "supports": "Reported public processions in Lienz; carved wooden masks, fur suits and cowbells.",
+      "limits": "Secondary travel reporting. Do not use the article's ancient-origin claims without additional scholarly corroboration. Distinguish Krampus and Perchten rather than treating every regional custom as identical.",
+      "sceneIds": ["roots", "authentic"]
+    },
+    {
+      "id": "salzburgerland",
+      "title": "Krampus and Perchten",
+      "publisher": "SalzburgerLand Tourismus GmbH",
+      "url": "https://www.salzburgerland.com/en/krampus-and-perchten/",
+      "supports": "Regional costume materials and public processions; official tourism promotion of Krampus events.",
+      "limits": "Promotion establishes that events are marketed to visitors, not measured revenue, attendance growth, or a causal economic effect. Event dates on this undated page should not be treated as a current schedule.",
+      "sceneIds": ["authentic", "economy"]
+    }
+  ],
+  "replacedLink": {
+    "url": "https://www.salzburg.info/en/events/events-calendar/traditional-krampus-run-at-the-salzburg-christmas-market_event_42164626",
+    "reason": "Redirected to a generic event calendar on verification; not evidence for a specific event."
+  },
+  "evidenceBoundaries": [
+    "Minor tourist injuries and frightened children belong to the classroom scenario, not a verified news report.",
+    "No source establishes revenue for the fictional town.",
+    "Generated imagery is illustration and must never be labeled archival evidence.",
+    "A source citation does not grant rights to reuse its photographs."
+  ]
+}
