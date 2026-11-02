@@ -240,6 +240,7 @@ async function commit(message='Edited presentation'){
  if(!scenes.length)throw Error('At least one scene is required.');const snapshot=scenes.map(sanitizeScene);if(JSON.stringify(snapshot).length>850000)throw Error('Presentation exceeds the shared size limit. Upload photos to Firebase Storage instead of embedding them.');
  if(!cloud){saveLocal(message);return;}
  if(!authUser)throw Error('Anonymous access is not ready. Check Firebase Authentication.');
+ if(!remoteReady)throw Error('Shared data is not ready. Wait for the connection or check Firestore setup.');
  const {db,fs}=cloud,deckRef=fs.doc(db,'decks','main'),historyRef=fs.doc(fs.collection(db,'versions'));
  $('#saveBtn').disabled=true;status('Saving a new shared revision…');
  try{
@@ -265,16 +266,23 @@ async function initializeFirebase(){
     import('https://www.gstatic.com/firebasejs/11.10.0/firebase-storage.js')
   ]);
   const app=appFns.initializeApp(firebaseConfig),auth=authFns.getAuth(app),db=fs.getFirestore(app),storage=storageFns.getStorage(app);
-  const identity=await authFns.signInAnonymously(auth);authUser=identity.user;cloud={app,db,fs,storage,storageFns};setConnection(true,'SHARED LIVE');
+  const identity=await authFns.signInAnonymously(auth);authUser=identity.user;cloud={app,db,fs,storage,storageFns};
+  let deckOnline=false,historyOnline=false,listenerFailed=false;
+  const updateConnection=()=>{remoteReady=deckOnline&&historyOnline&&!listenerFailed;setConnection(remoteReady,listenerFailed?'SYNC ERROR':remoteReady?'SHARED LIVE':'CONNECTING');};
+  const syncError=e=>{listenerFailed=true;updateConnection();console.error(e);toast('Cannot sync. Check Firestore database and published rules.');};
   const ref=fs.doc(db,'decks','main');
-  fs.onSnapshot(ref, snap=>{if(!snap.exists()){remoteReady=true;return;}const data=snap.data();remoteReady=true;const incoming=Number(data.revision)||0;
-   if(incoming<revision)return;
+  fs.onSnapshot(ref,{includeMetadataChanges:true},snap=>{
+   if(snap.metadata.fromCache){deckOnline=false;updateConnection();return;}
+   const firstRemote=!deckOnline;deckOnline=true;updateConnection();
+   if(!snap.exists()){revision=0;if(editing)refreshEditor();return;}
+   const data=snap.data(),incoming=Number(data.revision)||0;
+   if(!firstRemote&&incoming<revision)return;
    if(dirty&&incoming!==revision){remoteChanged=true;status('Another person saved a new version. Reload before saving to avoid overwriting their work.');toast('New remote revision available — your draft is preserved.');return;}
-   if(incoming===revision)return;
+   if(!firstRemote&&incoming===revision)return;
    scenes=(data.content||[]).map(sanitizeScene);revision=incoming;selected=Math.min(selected,scenes.length-1);renderScene();if(editing)refreshEditor();toast('Presentation updated · revision '+revision);
-  },e=>{setConnection(false,'SYNC ERROR');console.error(e);toast('Cannot sync. Check Firestore rules and authorized domains.');});
+  },syncError);
   const q=fs.query(fs.collection(db,'versions'),fs.orderBy('revision','desc'),fs.limit(100));
-  fs.onSnapshot(q,snap=>{history=snap.docs.map(d=>{const x=d.data();return {id:d.id,revision:x.revision,author:x.author,message:x.message,createdAt:x.createdAt?.toDate?.()?.toISOString()||'',snapshot:x.snapshot};});if(editing&&activeTab==='history')refreshEditor();},e=>console.warn('Versions listener:',e));
+  fs.onSnapshot(q,{includeMetadataChanges:true},snap=>{historyOnline=!snap.metadata.fromCache;updateConnection();if(snap.metadata.fromCache)return;history=snap.docs.map(d=>{const x=d.data();return {id:d.id,revision:x.revision,author:x.author,message:x.message,createdAt:x.createdAt?.toDate?.()?.toISOString()||'',snapshot:x.snapshot};});if(editing&&activeTab==='history')refreshEditor();},syncError);
  }catch(e){cloud=null;authUser=null;setConnection(false,'SETUP REQUIRED');console.error(e);toast('Firebase could not connect. Local preview is still available.');}
 }
 function reloadRemote(){if(!cloud){toast('Firebase is not connected.');return;}if(dirty&&!confirm('Discard unsaved local changes and load the latest published version?'))return;dirty=false;remoteChanged=false;const {fs,db}=cloud;fs.getDoc(fs.doc(db,'decks','main')).then(snap=>{if(!snap.exists()){toast('Nothing published yet.');return;}scenes=(snap.data().content||[]).map(sanitizeScene);revision=snap.data().revision||0;selected=0;renderScene();refreshEditor();toast('Reloaded latest published revision.');}).catch(e=>toast(e.message));}
