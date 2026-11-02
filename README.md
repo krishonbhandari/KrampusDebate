@@ -8,7 +8,8 @@ An immersive debate presentation for **Group 1: The Traditionalists**, supportin
 
 - The animated website and an in-page **Edit** panel are in `index.html`.
 - Images, motion effects, and scene templates are embedded inside the HTML, so **no assets folder is needed for this deployment**.
-- The site uses **local-only saving until Firebase is configured**. Do not expect classmates' edits to sync before completing the Firebase setup below.
+- `firebase-config.js` now points to Firebase project **krampuslauf-abe21**. Backend setup and two-browser sync still need verification; configuration alone does not enable shared editing.
+- An anonymous sign-in check on November 2, 2026 returned `CONFIGURATION_NOT_FOUND`. Complete Authentication setup below, then test again.
 - Historical revisions are locally saved in each browser at first. Once Firebase is connected, every published revision is shared and can be restored.
 - Anyone who can open the public website can edit it once shared editing is enabled. Anonymous editing is a deliberate project choice, but the URL is **not an access-control mechanism**.
 
@@ -20,13 +21,15 @@ After deployment, visit https://krishonbhandari.github.io/KrampusDebate/ .
 
 ## Enable shared editing and version history (Firebase)
 
-1. Visit https://console.firebase.google.com/ and create a project.
-2. Add a **Web App** to the project and copy its public Firebase SDK config values.
-3. In this repo, edit **firebase-config.js**, fill in its keys (apiKey, authDomain, projectId, appId, etc.), and commit the change. Never upload service-account credentials or private keys.
-4. In Firebase **Authentication → Sign-in method**, enable **Anonymous** sign-in.
-5. In Firebase **Firestore Database**, create a Standard database, open **Rules**, paste the contents of this repo's `firestore.rules` and **Publish**.
-6. Reload the website. The status badge should display **SHARED LIVE** rather than **LOCAL PREVIEW**.
-7. Open the website in two browsers to confirm edits and revision history sync between viewers.
+1. Open [the Firebase project](https://console.firebase.google.com/project/krampuslauf-abe21/overview). The web configuration is already committed; do not paste the npm SDK example into this static site.
+2. In **Authentication**, click **Get started** if prompted. Under **Sign-in method**, enable **Anonymous** and save. See [Firebase's anonymous authentication guide](https://firebase.google.com/docs/auth/web/anonymous-auth).
+3. In **Firestore Database**, inspect whether the project's **(default)** database exists and confirm its edition/mode. This website uses the Firestore Web SDK's document API, not MongoDB. If there is no database, create a Standard database for this existing integration.
+4. In that database's **Rules** tab, paste the exact contents of [firestore.rules](./firestore.rules) and **Publish**. The repository file is not automatically deployed by GitHub Pages.
+5. The rules allow public reads, require sign-in for writes, and require the deck and matching immutable history entry in the same transaction. Anonymous sign-in allows any visitor to edit; it does not restrict editing to classmates. All other document paths are denied.
+6. Wait for GitHub Pages deployment, then reload the website. **SHARED LIVE** appears only after both the deck and history listeners receive server responses. It confirms reads, not a successful write.
+7. Open the website in two different browsers. In browser A, make a small edit and **Save Version**; confirm browser B receives it and the same history revision. Restore the prior version and confirm that restoration also appears in both browsers. Until this passes, shared editing remains unverified.
+
+If the badge says **SETUP REQUIRED**, check Anonymous sign-in and the browser console's Firebase error. **SYNC ERROR** indicates a Firestore listener failure: confirm the default database and published rules. If an `auth/unauthorized-domain` error occurs, add `krishonbhandari.github.io` under Authentication → Settings → Authorized domains (hostname only).
 
 For optional large media uploads, use Firebase Storage and its `storage.rules` (may require the Blaze billing plan). The built-in photos and text editing do not require Storage.
 
@@ -36,7 +39,7 @@ For optional large media uploads, use Firebase Storage and its `storage.rules` (
 
 - **Edit** button or `E`: open the editor.
 - Change a scene's headline, supporting text, image, transition, color, speaker notes, layout, or order.
-- **Save Version**: publish your changes. For now the save is local; after connecting Firebase, the save synchronizes to everyone.
+- **Save Version**: publish your changes once the shared connection is ready. If Firebase initialization fails, saving remains local. Shared saves wait for the server listeners and reject conflicting revisions.
 - **History**: inspect and restore older revisions; a restoration creates a new revision.
 - Arrows, mouse wheel, swipes, or chapter markers: navigate the story.
 - `N`: show speaker notes.
